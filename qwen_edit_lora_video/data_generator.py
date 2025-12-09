@@ -47,14 +47,15 @@ BACKGROUND_COLORS = [
 PIXEL_ART_BASE = "Pixel art style, 16-bit retro game sprite, clean pixels, solid colors, no blur, centered character on solid background, front-facing view, no transparency."
 
 # Sprite sheet suffix for action generation (will include background color)
-SPRITE_SHEET_BASE = "2x2 grid sprite sheet, pixel art style, 16-bit retro game sprite, 4 frames showing the action sequence, clean pixels, solid colors, no blur, solid background, no transparency. Arrange frames in 2 rows and 2 columns showing different stages of the action."
+SPRITE_SHEET_BASE = "2x2 grid sprite sheet, pixel art style, 16-bit retro game sprite, 4 frames showing the action sequence in place, character stays centered in same position in all frames, no horizontal movement, clean pixels, solid colors, no blur, solid background, no transparency. Arrange frames in 2 rows and 2 columns: top-left (frame 1), top-right (frame 2), bottom-left (frame 3), bottom-right (frame 4). Frame 4 must loop smoothly back to frame 1 creating a seamless infinite animation cycle."
 
 # Character prompts for base pixel art sprites
 CHARACTER_PROMPTS = [
-    "Knight in silver armor holding a sword and shield",
-    "Wizard in purple robes with pointed hat and staff",
-    "Rogue in dark leather armor with dual daggers",
-    "Archer in green cloak with bow and quiver",
+    # Original characters (commented out)
+    # "Knight in silver armor holding a sword and shield",
+    # "Wizard in purple robes with pointed hat and staff",
+    # "Rogue in dark leather armor with dual daggers",
+    # "Archer in green cloak with bow and quiver",
     # "Barbarian warrior with battle axe and fur clothing",
     # "Mage in blue robes with glowing orb",
     # "Paladin in golden armor with holy symbol",
@@ -71,30 +72,62 @@ CHARACTER_PROMPTS = [
     # "Steampunk inventor with goggles and mechanical gadgets",
     # "Monk in simple robes with staff",
     # "Necromancer in dark robes with skull staff",
+    
+    # New unique characters
+    "Druid in nature robes with staff and animal companion",
+    "Bard with lute and magical musical notes",
+    "Cleric in white robes with holy symbol and healing light",
+    "Assassin in shadow cloak with hidden blades",
+    "Beastmaster with tamed wolf and hunting gear",
+    "Alchemist with potion belt and glowing flasks",
+    "Gunslinger with revolver and cowboy hat",
+    "Shaman with totem staff and tribal feathers",
+    "Demon hunter with crossbow and holy water vials",
+    "Time traveler with futuristic chronometer and portal device",
+    "Elemental mage with swirling fire and ice orbs",
+    "Shadow assassin blending with darkness and dual katanas",
+    "Crystal mage with floating glowing crystals",
+    "Mech pilot in powered exosuit with plasma cannon",
+    "Phoenix warrior with fire wings and flaming sword",
 ]
 
 # Actions for sprite sheet generation
+# Mix of simple/common actions and complex magical/transformative actions
 ACTIONS = [
+    # Simple/common actions
     "walking forward",
     "jumping up",
     "attacking with weapon",
-    "casting a spell",
     "defending with shield",
     "running fast",
-    "climbing up",
-    "falling down",
-    "shooting projectile",
-    "taking damage",
-    "celebrating victory",
-    "idle breathing animation",
     "crouching down",
-    "rolling dodge",
-    "charging attack",
+    "idle breathing animation",
+    "taking damage",
     "blocking incoming attack",
     "drinking potion",
     "collecting item",
-    "opening door",
-    "throwing object",
+    "rolling dodge",
+    "charging attack",
+    "shooting projectile",
+    "climbing up",
+    "celebrating victory",
+    # Complex magical/transformative actions
+    "changing dress magically",
+    "casting a spell",
+    "transforming into different form",
+    "teleporting away",
+    "summoning creature",
+    "creating magical barrier",
+    "shapeshifting partially",
+    "levitating and floating",
+    "creating portal",
+    "time manipulation gesture",
+    "elemental transformation",
+    "merging with shadow",
+    "phasing through matter",
+    "channeling energy from surroundings",
+    "dissolving into particles",
+    "materializing from light",
 ]
 
 
@@ -262,6 +295,7 @@ def main():
                     "index": result["index"],
                     "character_prompt": result["character_prompt"],
                     "image_path": image_filepath,
+                    "base_filename": base_name,  # Store base filename for matching output
                     "url": result["url"],
                     "background_color": result.get("background_color", random.choice(BACKGROUND_COLORS))
                 })
@@ -309,6 +343,9 @@ def main():
         
         for future in as_completed(future_to_data):
             result = future.result()
+            # Attach the base filename to the result for later use
+            sprite_data = future_to_data[future]
+            result["base_filename"] = sprite_data["sprite"]["base_filename"]
             sprite_sheet_results.append(result)
     
     sprite_sheet_results.sort(key=lambda x: x["index"])
@@ -321,9 +358,8 @@ def main():
     saved_sprite_sheets = 0
     for result in sprite_sheet_results:
         if result["success"]:
-            timestamp = int(time.time() * 1000)
-            action_safe = result["action"].replace(" ", "_")
-            base_name = f"{timestamp}_{result['index']:03d}_{action_safe}"
+            # Use the same filename as the base sprite (matching input/output filenames)
+            base_name = result["base_filename"]
             image_filepath = OUTPUT_SPRITES_DIR / f"{base_name}.png"
             text_filepath = OUTPUT_SPRITES_DIR / f"{base_name}.txt"
             
