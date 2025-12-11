@@ -1,0 +1,2 @@
+Character: Robot character with mechanical limbs
+Costume: with military green and black armor

@@ -1,9 +1,9 @@
 """
-Pixel Art Sprite Sheet Generator using Replicate's google/nano-banana-pro model
+Pixel Art Character Costume Change Generator using Replicate's google/nano-banana-pro model
 
 Two-pass generation:
 1. First pass: Generate base pixel art character sprites (square, 1:1) -> saved to input/
-2. Second pass: Generate 2x2 sprite sheets with actions using base sprites as reference -> saved to output/
+2. Second pass: Generate the same character with different costume using base sprite as reference -> saved to output/
 """
 
 import os
@@ -46,34 +46,32 @@ BACKGROUND_COLORS = [
 # Pixel art style suffix for base character generation (will include background color)
 PIXEL_ART_BASE = "Pixel art style, 16-bit retro game sprite, clean pixels, solid colors, no blur, centered character on solid background, front-facing view, no transparency."
 
-# Sprite sheet suffix for action generation (will include background color)
-SPRITE_SHEET_BASE = "2x2 grid sprite sheet, pixel art style, 16-bit retro game sprite, 4 frames showing the action sequence in place, character stays centered in same position in all frames, no horizontal movement, clean pixels, solid colors, no blur, solid background, no transparency. Arrange frames in 2 rows and 2 columns: top-left (frame 1), top-right (frame 2), bottom-left (frame 3), bottom-right (frame 4). Frame 4 must loop smoothly back to frame 1 creating a seamless infinite animation cycle."
+# Costume change suffix for second pass (will include background color)
+COSTUME_CHANGE_BASE = "Pixel art style, 16-bit retro game sprite, clean pixels, solid colors, no blur, centered character on solid background, front-facing view, same pose and position as reference image but wearing different costume, no transparency."
 
 # Character prompts for base pixel art sprites
 CHARACTER_PROMPTS = [
-    # Original characters (commented out)
-    # "Knight in silver armor holding a sword and shield",
-    # "Wizard in purple robes with pointed hat and staff",
-    # "Rogue in dark leather armor with dual daggers",
-    # "Archer in green cloak with bow and quiver",
-    # "Barbarian warrior with battle axe and fur clothing",
-    # "Mage in blue robes with glowing orb",
-    # "Paladin in golden armor with holy symbol",
-    # "Ninja in black outfit with katana",
-    # "Pirate with eyepatch, tricorn hat and cutlass",
-    # "Samurai in traditional armor with katana",
-    # "Viking with horned helmet and axe",
-    # "Cyber warrior in futuristic armor with laser gun",
-    # "Space marine in power armor with rifle",
-    # "Robot character with mechanical limbs",
-    # "Elf ranger with longbow and nature-themed clothing",
-    # "Dwarf warrior with hammer and heavy armor",
-    # "Alien character with tentacles and advanced technology",
-    # "Steampunk inventor with goggles and mechanical gadgets",
-    # "Monk in simple robes with staff",
-    # "Necromancer in dark robes with skull staff",
+    "Knight in silver armor holding a sword and shield",
+    "Wizard in purple robes with pointed hat and staff",
+    "Rogue in dark leather armor with dual daggers",
+    "Archer in green cloak with bow and quiver",
+    "Barbarian warrior with battle axe and fur clothing",
+    "Mage in blue robes with glowing orb",
+    "Paladin in golden armor with holy symbol",
+    "Ninja in black outfit with katana",
+    "Pirate with eyepatch, tricorn hat and cutlass",
+    "Samurai in traditional armor with katana",
+    "Viking with horned helmet and axe",
+    "Cyber warrior in futuristic armor with laser gun",
+    "Space marine in power armor with rifle",
+    "Robot character with mechanical limbs",
+    "Elf ranger with longbow and nature-themed clothing",
+    "Dwarf warrior with hammer and heavy armor",
+    "Alien character with tentacles and advanced technology",
+    "Steampunk inventor with goggles and mechanical gadgets",
+    "Monk in simple robes with staff",
+    "Necromancer in dark robes with skull staff",
     
-    # New unique characters
     "Druid in nature robes with staff and animal companion",
     "Bard with lute and magical musical notes",
     "Cleric in white robes with holy symbol and healing light",
@@ -91,44 +89,220 @@ CHARACTER_PROMPTS = [
     "Phoenix warrior with fire wings and flaming sword",
 ]
 
-# Actions for sprite sheet generation
-# Mix of simple/common actions and complex magical/transformative actions
-ACTIONS = [
-    # Simple/common actions
-    "walking forward",
-    "jumping up",
-    "attacking with weapon",
-    "defending with shield",
-    "running fast",
-    "crouching down",
-    "idle breathing animation",
-    "taking damage",
-    "blocking incoming attack",
-    "drinking potion",
-    "collecting item",
-    "rolling dodge",
-    "charging attack",
-    "shooting projectile",
-    "climbing up",
-    "celebrating victory",
-    # Complex magical/transformative actions
-    "changing dress magically",
-    "casting a spell",
-    "transforming into different form",
-    "teleporting away",
-    "summoning creature",
-    "creating magical barrier",
-    "shapeshifting partially",
-    "levitating and floating",
-    "creating portal",
-    "time manipulation gesture",
-    "elemental transformation",
-    "merging with shadow",
-    "phasing through matter",
-    "channeling energy from surroundings",
-    "dissolving into particles",
-    "materializing from light",
-]
+# Pre-mapped costume changes for each character type
+# Key: character identifier, Value: list of costume variations
+COSTUME_CHANGES = {
+    "Knight": [
+        "wearing golden ceremonial armor with red cape",
+        "wearing dark obsidian armor with purple accents",
+        "wearing silver plate armor with blue cape",
+        "wearing damaged battle-worn armor with torn cloak",
+    ],
+    "Wizard": [
+        "wearing crimson battle robes with gold trim",
+        "wearing white archmage robes with star patterns",
+        "wearing dark necromancer robes with skull motifs",
+        "wearing emerald green robes with nature symbols",
+    ],
+    "Rogue": [
+        "wearing red assassin outfit with hood",
+        "wearing noble's disguise with fancy vest",
+        "wearing gray thief outfit with many pockets",
+        "wearing black shadow cloak with mask",
+    ],
+    "Archer": [
+        "wearing brown ranger outfit with leaf patterns",
+        "wearing royal guard uniform with gold trim",
+        "wearing white snow camouflage outfit",
+        "wearing dark hunter outfit with fur trim",
+    ],
+    "Barbarian": [
+        "wearing tribal chieftain outfit with feathers",
+        "wearing bear pelt armor with bone accessories",
+        "wearing war paint and minimal leather armor",
+        "wearing horned helmet with wolf pelt cloak",
+    ],
+    "Mage": [
+        "wearing purple arcane robes with mystical runes",
+        "wearing white holy vestments with light effects",
+        "wearing red fire mage robes with flame patterns",
+        "wearing cyan ice mage robes with frost crystals",
+    ],
+    "Paladin": [
+        "wearing white and gold holy armor with wings",
+        "wearing silver crusader armor with cross symbol",
+        "wearing ornate temple guard armor with gems",
+        "wearing battle-worn blessed armor with divine glow",
+    ],
+    "Ninja": [
+        "wearing white shinobi outfit with headband",
+        "wearing red assassin garb with mask",
+        "wearing purple shadow clan outfit",
+        "wearing traditional samurai kimono with katana",
+    ],
+    "Pirate": [
+        "wearing captain's coat with gold buttons",
+        "wearing red bandana with leather vest",
+        "wearing noble's stolen outfit with jewels",
+        "wearing weathered sailor outfit with patches",
+    ],
+    "Samurai": [
+        "wearing ceremonial red and gold armor",
+        "wearing black and silver war armor",
+        "wearing traditional white and blue kimono",
+        "wearing shogun's ornate armor with crest",
+    ],
+    "Viking": [
+        "wearing berserker bear pelt with war paint",
+        "wearing chieftain's chainmail with fur cloak",
+        "wearing leather armor with Norse symbols",
+        "wearing iron plate armor with raven motifs",
+    ],
+    "Cyber": [
+        "wearing stealth black nanosuit with blue lights",
+        "wearing heavy combat armor with red accents",
+        "wearing white tech suit with holographic display",
+        "wearing damaged armor with exposed circuits",
+    ],
+    "Space": [
+        "wearing red commander armor with medals",
+        "wearing black ops stealth armor",
+        "wearing white explorer suit with scanner",
+        "wearing heavy assault armor with weapon mounts",
+    ],
+    "Robot": [
+        "with gold and white plating upgrade",
+        "with military green and black armor",
+        "with sleek chrome and blue LED lights",
+        "with rusty orange and weathered parts",
+    ],
+    "Elf": [
+        "wearing royal elvish robes with gold embroidery",
+        "wearing forest scout outfit with leaf patterns",
+        "wearing dark elf armor with purple accents",
+        "wearing white moonlight robes with silver trim",
+    ],
+    "Dwarf": [
+        "wearing mithril armor with clan symbols",
+        "wearing forge master outfit with leather apron",
+        "wearing mountain king armor with gems",
+        "wearing bronze battle armor with runes",
+    ],
+    "Alien": [
+        "wearing purple energy shield armor",
+        "wearing bio-organic exosuit with veins",
+        "wearing crystalline armor with glow",
+        "wearing tribal alien outfit with tech implants",
+    ],
+    "Steampunk": [
+        "wearing brass and copper inventor outfit",
+        "wearing leather aviator gear with goggles",
+        "wearing Victorian nobleman attire with gadgets",
+        "wearing clockwork armor with gears",
+    ],
+    "Monk": [
+        "wearing orange temple robes with sash",
+        "wearing white meditation outfit",
+        "wearing red martial arts gi with black belt",
+        "wearing traveling monk outfit with straw hat",
+    ],
+    "Necromancer": [
+        "wearing bone armor with skull mask",
+        "wearing tattered purple robes with chains",
+        "wearing black death knight armor",
+        "wearing plague doctor outfit with dark magic",
+    ],
+    "Druid": [
+        "wearing autumn leaf outfit with orange and red",
+        "wearing bark armor with living vines",
+        "wearing flower crown with spring dress",
+        "wearing winter fur with ice crystals",
+    ],
+    "Bard": [
+        "wearing colorful jester outfit with bells",
+        "wearing noble's fancy doublet with feathered hat",
+        "wearing traveling minstrel outfit with cloak",
+        "wearing royal court outfit with golden lute",
+    ],
+    "Cleric": [
+        "wearing golden high priest vestments",
+        "wearing battle cleric armor with holy symbols",
+        "wearing simple monk robes with prayer beads",
+        "wearing white and silver ceremonial outfit",
+    ],
+    "Assassin": [
+        "wearing red and black guild outfit",
+        "wearing noble's disguise with hidden weapons",
+        "wearing desert assassin robes with scarf",
+        "wearing urban stealth suit with mask",
+    ],
+    "Beastmaster": [
+        "wearing druid outfit with animal pelts",
+        "wearing tribal hunter gear with totems",
+        "wearing ranger outfit with beast claw trophies",
+        "wearing shaman robes with feathers and bones",
+    ],
+    "Alchemist": [
+        "wearing purple researcher robes with vials",
+        "wearing leather apron with bubbling potions",
+        "wearing noble chemist outfit with gold trim",
+        "wearing plague doctor outfit with potion belt",
+    ],
+    "Gunslinger": [
+        "wearing black outlaw outfit with poncho",
+        "wearing brown sheriff outfit with star badge",
+        "wearing red desperado outfit with bandana",
+        "wearing fancy gambler outfit with deck of cards",
+    ],
+    "Shaman": [
+        "wearing white spirit guide robes with feathers",
+        "wearing tribal chieftain outfit with mask",
+        "wearing bone armor with animal skull headdress",
+        "wearing nature priest robes with glowing totems",
+    ],
+    "Demon": [
+        "wearing red and black demon slayer armor",
+        "wearing holy exorcist robes with crosses",
+        "wearing dark hunter outfit with silver weapons",
+        "wearing blessed paladin armor with demon trophies",
+    ],
+    "Time": [
+        "wearing Victorian steampunk outfit with gears",
+        "wearing futuristic white suit with holographic clock",
+        "wearing ancient scholar robes with hourglasses",
+        "wearing quantum armor with time distortion effects",
+    ],
+    "Elemental": [
+        "wearing fire-themed red and orange robes with flames",
+        "wearing ice-themed blue and white robes with crystals",
+        "wearing earth-themed brown and green robes with rocks",
+        "wearing storm-themed purple and silver robes with lightning",
+    ],
+    "Shadow": [
+        "wearing dark purple shadow weave outfit",
+        "wearing black void armor with red eyes",
+        "wearing gray stealth suit with smoke effects",
+        "wearing midnight blue rogue outfit with daggers",
+    ],
+    "Crystal": [
+        "wearing prismatic rainbow crystal armor",
+        "wearing pink and purple gem-studded robes",
+        "wearing transparent quartz armor with light refraction",
+        "wearing amethyst mage robes with floating gems",
+    ],
+    "Mech": [
+        "in red and white battle unit with missiles",
+        "in blue and silver stealth unit with cloaking",
+        "in green and black heavy assault unit",
+        "in gold and white commander unit with cape",
+    ],
+    "Phoenix": [
+        "wearing golden flame armor with bright wings",
+        "wearing red and orange battle robes with fire aura",
+        "wearing white ash and ember outfit",
+        "wearing crimson rebirth armor with phoenix feathers",
+    ],
+}
 
 
 def generate_base_sprite(character_prompt: str, index: int) -> Dict:
@@ -174,15 +348,35 @@ def generate_base_sprite(character_prompt: str, index: int) -> Dict:
         }
 
 
-def generate_action_sprite_sheet(base_image_url: str, character_prompt: str, action: str, index: int, background_color: str = None) -> Dict:
+def get_character_type(character_prompt: str) -> str:
     """
-    SECOND PASS: Generate 2x2 sprite sheet with action using base sprite as reference
+    Extract character type from prompt to match with costume changes.
+    Returns the matched character type key or None.
+    """
+    prompt_lower = character_prompt.lower()
+    
+    for char_type in COSTUME_CHANGES.keys():
+        if char_type.lower() in prompt_lower:
+            return char_type
+    
+    # Fallback: return a generic type if no match found
+    return None
+
+
+def generate_costume_change(base_image_url: str, character_prompt: str, costume_description: str, index: int, background_color: str = None) -> Dict:
+    """
+    SECOND PASS: Generate the same character with different costume using base sprite as reference
     """
     # Use the same background color as base sprite, or random if not provided
     bg_color = background_color if background_color else random.choice(BACKGROUND_COLORS)
-    full_prompt = f"{character_prompt} performing action: {action}, {SPRITE_SHEET_BASE} Background color: solid {bg_color}, no transparency, no checkerboard pattern."
     
-    print(f"[{index}] 🎬 Generating sprite sheet: '{character_prompt[:40]}...' - Action: {action} (bg: {bg_color})")
+    # Extract character type from prompt to maintain identity
+    character_type = get_character_type(character_prompt)
+    
+    # Build the costume change prompt
+    full_prompt = f"{character_type if character_type else 'Character'} {costume_description}, {COSTUME_CHANGE_BASE} Background color: solid {bg_color}, no transparency, no checkerboard pattern."
+    
+    print(f"[{index}] 👗 Generating costume change: '{character_prompt[:40]}...' - {costume_description} (bg: {bg_color})")
     
     try:
         output = replicate.run(
@@ -191,29 +385,29 @@ def generate_action_sprite_sheet(base_image_url: str, character_prompt: str, act
                 "prompt": full_prompt,
                 "resolution": RESOLUTION,
                 "image_input": [str(base_image_url)],  # Use base sprite as reference
-                "aspect_ratio": "1:1",  # Square for 2x2 grid
+                "aspect_ratio": "1:1",  # Square for character sprite
                 "output_format": OUTPUT_FORMAT,
                 "safety_filter_level": "block_only_high"
             }
         )
         
-        print(f"[{index}] ✅ Sprite sheet completed!")
+        print(f"[{index}] ✅ Costume change completed!")
         
         return {
             "index": index,
             "character_prompt": character_prompt,
-            "action": action,
+            "costume_description": costume_description,
             "background_color": bg_color,
             "url": output,
             "success": True
         }
         
     except Exception as e:
-        print(f"[{index}] ❌ Error generating sprite sheet: {e}")
+        print(f"[{index}] ❌ Error generating costume change: {e}")
         return {
             "index": index,
             "character_prompt": character_prompt,
-            "action": action,
+            "costume_description": costume_description,
             "success": False,
             "error": str(e)
         }
@@ -235,7 +429,7 @@ def main():
     """
     Main entry point - Two-pass sprite generation:
     1. Generate base pixel art character sprites
-    2. Generate action sprite sheets using base sprites as reference
+    2. Generate costume changes using base sprites as reference
     """
     
     # Create output directories
@@ -243,12 +437,12 @@ def main():
     OUTPUT_SPRITES_DIR.mkdir(parents=True, exist_ok=True)
     
     print("=" * 70)
-    print("🎮 PIXEL ART SPRITE SHEET GENERATOR")
+    print("🎮 PIXEL ART CHARACTER COSTUME CHANGE GENERATOR")
     print("=" * 70)
     print(f"📝 Characters: {len(CHARACTER_PROMPTS)}")
-    print(f"🎬 Available actions: {len(ACTIONS)}")
+    print(f"👗 Character types with costumes: {len(COSTUME_CHANGES)}")
     print(f"📁 Input folder (base sprites): {INPUT_DIR.absolute()}")
-    print(f"📁 Output folder (sprite sheets): {OUTPUT_SPRITES_DIR.absolute()}")
+    print(f"📁 Output folder (costume changes): {OUTPUT_SPRITES_DIR.absolute()}")
     print(f"🖼️  Resolution: {RESOLUTION}")
     print("=" * 70)
     print()
@@ -315,30 +509,39 @@ def main():
         return
     
     # ============================================================================
-    # SECOND PASS: Generate action sprite sheets using base sprites as reference
+    # SECOND PASS: Generate costume changes using base sprites as reference
     # ============================================================================
-    print("🎬 SECOND PASS: Generating action sprite sheets...")
+    print("👗 SECOND PASS: Generating costume changes...")
     print("-" * 70)
     
-    sprite_sheet_results = []
+    costume_change_results = []
     
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_to_data = {}
         
         for sprite in base_sprites:
-            # Pick a random action for this character
-            action = random.choice(ACTIONS)
+            # Get the character type from the prompt
+            character_type = get_character_type(sprite["character_prompt"])
+            
+            # Get appropriate costume change for this character type
+            if character_type and character_type in COSTUME_CHANGES:
+                costume_description = random.choice(COSTUME_CHANGES[character_type])
+            else:
+                # Fallback to generic costume if character type not found
+                print(f"[{sprite['index']}] ⚠️  Warning: Character type not found for '{sprite['character_prompt'][:50]}...', using generic costume")
+                costume_description = "wearing different colored outfit"
+            
             future = executor.submit(
-                generate_action_sprite_sheet,
+                generate_costume_change,
                 sprite["url"],
                 sprite["character_prompt"],
-                action,
+                costume_description,
                 sprite["index"],
                 sprite["background_color"]  # Pass the background color from base sprite
             )
             future_to_data[future] = {
                 "sprite": sprite,
-                "action": action
+                "costume_description": costume_description
             }
         
         for future in as_completed(future_to_data):
@@ -346,17 +549,17 @@ def main():
             # Attach the base filename to the result for later use
             sprite_data = future_to_data[future]
             result["base_filename"] = sprite_data["sprite"]["base_filename"]
-            sprite_sheet_results.append(result)
+            costume_change_results.append(result)
     
-    sprite_sheet_results.sort(key=lambda x: x["index"])
+    costume_change_results.sort(key=lambda x: x["index"])
     
-    # Download and save sprite sheets
+    # Download and save costume changes
     print()
-    print("📥 Downloading sprite sheets to output folder...")
+    print("📥 Downloading costume changes to output folder...")
     print("-" * 70)
     
-    saved_sprite_sheets = 0
-    for result in sprite_sheet_results:
+    saved_costume_changes = 0
+    for result in costume_change_results:
         if result["success"]:
             # Use the same filename as the base sprite (matching input/output filenames)
             base_name = result["base_filename"]
@@ -364,11 +567,11 @@ def main():
             text_filepath = OUTPUT_SPRITES_DIR / f"{base_name}.txt"
             
             if download_image(result["url"], image_filepath):
-                # Save action description to text file
-                prompt_text = f"Character: {result['character_prompt']}\nAction: {result['action']}"
+                # Save costume description to text file
+                prompt_text = f"Character: {result['character_prompt']}\nCostume: {result['costume_description']}"
                 text_filepath.write_text(prompt_text)
                 print(f"[{result['index']}] 💾 Saved: {base_name}.png")
-                saved_sprite_sheets += 1
+                saved_costume_changes += 1
             else:
                 print(f"[{result['index']}] ❌ Failed to download")
         else:
@@ -379,7 +582,7 @@ def main():
     print("✨ GENERATION COMPLETE!")
     print("=" * 70)
     print(f"🎨 Base sprites: {len(base_sprites)}/{len(CHARACTER_PROMPTS)} saved to {INPUT_DIR.name}/")
-    print(f"🎬 Sprite sheets: {saved_sprite_sheets}/{len(base_sprites)} saved to {OUTPUT_SPRITES_DIR.name}/")
+    print(f"👗 Costume changes: {saved_costume_changes}/{len(base_sprites)} saved to {OUTPUT_SPRITES_DIR.name}/")
     print(f"📁 Location: {OUTPUT_DIR.absolute()}")
     print("=" * 70)
 
